@@ -1,0 +1,402 @@
+Exercise 2: Managing Container Life Cycles
+
+1. In a new terminal , execute the docker pull command to download the Ubuntu 18.04 container image:
+
+$ docker pull ubuntu:18.04
+
+You should see the following output indicating that Docker is downloading all the 
+layers of the base image:
+5bed26d33875: Pull complete 
+f11b29a9c730: Pull complete 
+930bda195c84: Pull complete 
+78bf9a5ad49e: Pull complete 
+Digest: sha256:bec5a2727be7fff3d308193cfde3491f8fba1a2ba392
+ b7546b43a051853a341d
+Status: Downloaded newer image for ubuntu:18.04
+docker.io/library/ubuntu:18.04
+
+--------------------------------------------------------------------------------------------------
+
+2. Use the docker pull command to download the Ubuntu 19.04
+base image:
+
+$ docker pull ubuntu:19.04
+
+
+You will see similar output as Docker downloads the Ubuntu 19.04
+base image:
+19.04: Pulling from library/ubuntu
+4dc9c2fff018: Pull complete 
+0a4ccbb24215: Pull complete 
+c0f243bc6706: Pull complete 
+5ff1eaecba77: Pull complete 
+Digest: sha256:2adeae829bf27a3399a0e7db8ae38d5adb89bcaf1bbef
+ 378240bc0e6724e8344
+Status: Downloaded newer image for ubuntu:19.04
+docker.io/library/ubuntu:19.04
+
+--------------------------------------------------------------------------------------------------
+3. Use the docker images command to confirm that the container images are 
+downloaded to the local container cache:
+
+$ docker images
+
+The contents of the local container cache will display the Ubuntu 18.04 and 
+Ubuntu 19.04 base images, as well as our hello-world image from the 
+earlier exercise:
+
+REPOSITORY   TAG       IMAGE ID     CREATED        SIZE
+ubuntu       18.04     4e5021d210f6 4 weeks ago    64.2MB
+ubuntu       19.04     c88ac1f841b7 3 months ago   70MB
+hello-world  latest    bf756fb1ae65 3 months ago   13.3kB
+
+--------------------------------------------------------------------------------------------------
+
+4. Before running these images, use the docker inspect command to get 
+verbose output about what makes up the container images and how they differ. 
+In your terminal, run the docker inspect command and use the image ID of 
+the Ubuntu 18.04 container image as the main argument:
+
+$ docker inspect 4e5021d210f6
+
+The following is the truncated output of the inspect
+command. In the Ubuntu 18.04 image, the "Created" parameter should 
+provide the date and time the container image was built:
+"Id": "4e5021d210f6d4a0717f4b643409eff23a4dc01c4140fa378b1b
+ f0a4f8f4",
+"Created": "2020-03-20T19:20:22.835345724Z",
+"Path": "/bin/bash",
+"Args": [],
+
+--------------------------------------------------------------------------------------------------
+
+5. Inspecting the Ubuntu 19.04 container, you can see that this parameter 
+is different. Run the docker inspect command in the Ubuntu 19.04
+container image ID:
+$ docker inspect c88ac1f841b7
+In the displayed output, you will see that this container image was created on a 
+different date to the 18.04 container image:
+"Id": "c88ac1f841b74e5021d210f6d4a0717f4b643409eff23a4dc0
+ 1c4140fa"
+"Created": "2020-01-16T01:20:46.938732934Z",
+"Path": "/bin/bash",
+"Args": []
+
+--------------------------------------------------------------------------------------------------
+
+6. After inspecting both the container images, it will be clear that your best choice is 
+to stick with the Ubuntu Long Term Support 18.04 release. As you saw from the 
+preceding outputs, the 18.04 release is more up to date than the 19.04 release. 
+This is to be expected as Ubuntu will generally provide more stable updates to 
+the long-term support releases.
+
+--------------------------------------------------------------------------------------------------
+7. Use the docker run command to start an instance of the Ubuntu 18.04 container:
+
+
+$ docker run -d ubuntu:18.04
+
+Notice that this time we are using the docker run command with the -d flag. 
+This tells Docker to run the container in daemon mode (or in the background). 
+If we omit the -d flag, the container will take over our current terminal until the 
+primary process inside the container terminates.
+
+
+--------------------------------------------------------------------------------------------------
+8. Check the status of the container using the docker ps -a command:
+
+$ docker ps -a
+This will reveal a similar output to the following:
+CONTAINER ID IMAGE         COMMAND    CREATED        STATUS               PORTS  NAMES
+c139e44193de ubuntu:18.04 "/bin/bash" 6 seconds ago  Exited (0) 4 seconds        ago xenodochial_banzai
+
+As you can see, your container is stopped and exited. This is because the primary 
+process inside the container is /bin/bash, which is a shell. The Bash shell 
+cannot run without being executed in an interactive mode since it expects text 
+input and output from a user.
+
+--------------------------------------------------------------------------------------------------
+9. Run the docker run command again, passing in the -i flag to make 
+the session interactive (expecting user input), and the -t flag to allocate a 
+pseudo-tty handler to the container. pseudo-tty handler will essentially link 
+the user's terminal to the interactive Bash shell running inside the container. 
+
+$ docker run -i -t -d --name ubuntu1 ubuntu:18.04
+
+
+--------------------------------------------------------------------------------------------------
+10. Execute the docker ps -a command again to check the status of the 
+container instance:
+$ docker ps -a
+
+You should now see the new instance running, as well as the instance that failed 
+to start moments ago:
+CONTAINER ID IMAGE         COMMAND    CREATED         STATUS                 PORTS NAMES
+f087d0d92110 ubuntu:18.04 "/bin/bash" 4 seconds ago   Up 2 seconds                 ubuntu1
+c139e44193de ubuntu:18.04 "/bin/bash" 5 minutes ago   Exited (0) 5 minutes ago     xenodochial_banzai
+
+--------------------------------------------------------------------------------------------------
+11. You now have an Ubuntu container up and running. You can run commands 
+inside this container using the docker exec command. Run the exec
+command to access a Bash shell, which will allow us to run commands inside the 
+container. 
+Similar to docker run, pass in the -i and -t flags to make it an 
+interactive session. Also pass in the name or ID of the container, so that Docker 
+knows which container you are targeting. The final argument of docker exec
+is always the command you wish to execute. In this case, it will be /bin/bash
+to start a Bash shell inside the container instance:
+
+
+docker exec -it ubuntu1 /bin/bash
+
+
+You should immediately see your prompt change to a root shell. This indicates 
+that you have successfully launched a shell inside your Ubuntu container. The 
+hostname of the container, cfaa37795a7b, is taken from the first twelve 
+characters of the container ID. This allows the user to know for certain which 
+container are they accessing, as seen in the following example:
+
+
+root@f087d0d92110:/#
+--------------------------------------------------------------------------------------------------
+
+
+12. From inside the container, you are very limited in terms of what tools you have 
+available. Unlike a VM image, container images are extremely minimal in terms 
+of the packages that come preinstalled. The echo command should be available, 
+however. Use echo to write a simple message to a text file:
+
+
+root@f087d0d92110:/# echo "Hello world from ubuntu1" > hello-world.txt
+
+
+--------------------------------------------------------------------------------------------------
+13. Run the exit command to exit from the Bash shell of the ubuntu1 container. 
+You should return to your normal terminal shell:
+root@cfaa37795a7b:/# exit
+
+
+--------------------------------------------------------------------------------------------------
+14. Now create a second container called ubuntu2 that will also run in your Docker 
+environment using the Ubuntu 19.04 image:
+
+
+$ docker run -i -t -d --name ubuntu2 ubuntu:19.04
+
+--------------------------------------------------------------------------------------------------
+15. Run docker exec to access a shell of this second container. Remember to use 
+the name or container ID of the new container you created. Likewise, access a 
+Bash shell inside this container, so the final argument will be /bin/bash:
+
+$ docker exec -it ubuntu2 /bin/bash
+
+You should observe your prompt change to a Bash root shell, similar to how it 
+did for the Ubuntu 18.04 container image:
+
+root@c139e44193de:/#
+
+
+
+--------------------------------------------------------------------------------------------------
+16. Run the echo command inside the ubuntu2 container instance to write a 
+similar hello-world-type greeting:
+
+root@c139e44193de:/# echo "Hello-world from ubuntu2!" > hello-world.txt
+
+--------------------------------------------------------------------------------------------------
+17. Currently, you have two Ubuntu container instances running in your Docker 
+environment with two separate hello-world greeting messages in the 
+home directory of the root account. Use docker ps to see the two running 
+container images:
+
+$ docker ps
+The list of running containers should reflect the two Ubuntu containers, as well 
+as the time elapsed since they have been created:
+
+CONTAINER ID IMAGE        COMMAND     CREATED          STATUS       PORTS NAMES
+875cad5c4dd8 ubuntu:19.04 "/bin/bash" 3 minutes ago    Up 3 minutes       ubuntu2
+cfaa37795a7b ubuntu:18.04 "/bin/bash" 15 minutes ago   Up 15 minutes      ubuntu1
+
+
+
+--------------------------------------------------------------------------------------------------
+18. Instead of using docker exec to access a shell inside our containers, use it to 
+display the output of the hello-world.txt files you wrote by executing the 
+cat command inside the containers:
+
+$ docker exec -it ubuntu1 cat hello-world.txt
+--------------------------------------------------------------------------------------------------
+
+
+
+19. Run the same cat command in the ubuntu2 container instance:
+$ docker exec -it ubuntu2 cat hello-world.txt
+--------------------------------------------------------------------------------------------------
+
+
+20. In a similar manner to that you used to execute commands inside our running 
+containers, you can also stop, start, and restart them. Stop one of your container 
+instances using the docker stop command. In your terminal session, execute 
+the docker stop command, followed by the name or container ID of the 
+ubuntu2 container:
+
+
+$ docker stop ubuntu2
+
+--------------------------------------------------------------------------------------------------
+21. Use the docker ps command to view all running container instances:
+$ docker ps
+The output will display the ubuntu1 container up and running:
+CONTAINERID     IMAGE        COMMAND     CREATED         STATUS        PORTS NAMES
+cfaa37795a7b    ubuntu:18.04 "/bin/bash" 26 minutes ago  Up 26 minutes       ubuntu1
+
+
+
+--------------------------------------------------------------------------------------------------
+22. Execute the docker ps -a command to view all container instances, 
+regardless of whether they are running, to see your container in a stopped state:
+
+
+$ docker ps -a
+The command will return the following output:
+CONTAINER ID IMAGE         COMMAND     CREATED         STATUS                     PORTS NAMES
+875cad5c4dd8 ubuntu:19.04  "/bin/bash" 14 minutes ago  Exited (0) 6 seconds ago         ubuntu2
+
+
+--------------------------------------------------------------------------------------------------
+23. Use the docker start or docker restart command to restart the 
+container instance:
+
+$ docker start ubuntu2
+
+
+--------------------------------------------------------------------------------------------------
+24. Verify that the container is running again by using the docker ps command:
+$ docker ps
+Notice that STATUS shows that this container has only been up for 
+a short period (1 second), although the container instance was 
+created 17 minutes ago:
+
+CONTAINER ID   IMAGE          COMMAND     CREATED         STATUS       PORTS NAMES
+875cad5c4dd8   ubuntu:19.04   "/bin/bash" 17 minutes ago  Up 1 second        ubuntu2
+cfaa37795a7b   ubuntu:18.04   "/bin/bash" 29 minutes ago  Up 29 minutes      ubuntu1
+
+
+
+--------------------------------------------------------------------------------------------------
+25. The final stage of the container management life cycle is cleaning up the 
+container instances you created. Use the docker stop command to stop 
+the ubuntu1 container instance:
+
+
+$ docker stop ubuntu1
+
+--------------------------------------------------------------------------------------------------
+26. Perform the same docker stop command to stop the ubuntu2
+container instance:
+
+
+$ docker stop ubuntu2
+
+
+--------------------------------------------------------------------------------------------------
+27. When container instances are in a stopped state, use the docker rm command 
+to delete the container instances altogether. Use docker rm followed by the 
+name or container ID to delete the ubuntu1 container instance:
+
+
+$ docker rm ubuntu1
+
+
+This command will return no output, although some versions of Docker may 
+return the container ID.
+Perform this same step on the ubuntu2 container instance: 
+
+$ docker rm ubuntu2
+
+
+
+--------------------------------------------------------------------------------------------------
+
+28. Execute docker ps -a to see all containers, even the ones in a stopped state. 
+You will find that the stopped containers no longer exist due to the fact they 
+have been deleted by our previous command.
+
+docker ps -a
+
+
+You may also delete the hello-world container instances, as well. Delete the hello-world container using 
+the container ID captured from the 
+
+docker ps -a 
+
+output:
+
+$ docker rm b291785f066c
+
+
+--------------------------------------------------------------------------------------------------
+
+29. To completely reset the state of our Docker environment, delete the base 
+images you downloaded during this exercise as well. Use the docker images
+command to view the cached base images:
+
+
+$ docker images
+
+
+The list of Docker images and all associated metadata in your local cache 
+will display:
+
+REPOSITORY   TAG   IMAGE ID      CREATED      SIZE
+ubuntu      18.04  4e5021d210f6  4 weeks ago  64.2MB
+ubuntu      19.04  c88ac1f841b7  3 months ago 70MB
+hello-world latest bf756fb1ae65  3 months ago 13.3kB
+
+
+--------------------------------------------------------------------------------------------------
+30. Execute the docker rmi command followed by the image ID to delete the first 
+image ID:
+
+$ docker rmi 4e5021d210f6
+
+Similar to docker pull, the rmi command will delete each image and all 
+associated layers:
+
+Untagged: ubuntu:18.04
+Untagged: ubuntu@sha256:bec5a2727be7fff3d308193cfde3491f8fba1a2b
+a392b7546b43a051853a341d
+Deleted: sha256:4e5021d210f65ebe915670c7089120120bc0a303b9020859
+2851708c1b8c04bd
+Deleted: sha256:1d9112746e9d86157c23e426ce87cc2d7bced0ba2ec8ddbd
+fbcc3093e0769472
+Deleted: sha256:efcf4a93c18b5d01aa8e10a2e3b7e2b2eef0378336456d86
+53e2d123d6232c1e
+Deleted: sha256:1e1aa31289fdca521c403edd6b37317bf0a349a941c7f19b
+6d9d311f59347502
+Deleted: sha256:c8be1b8f4d60d99c281fc2db75e0f56df42a83ad2f0b0916
+21ce19357e19d853
+--------------------------------------------------------------------------------------------------
+
+31.Perform this step for each image you wish to delete, substituting in the various 
+image IDs. For each base image you delete, you will see all of the image layers 
+get untagged and deleted along with it. 
+--------------------------------------------------------------------------------------------------
+
+
+Note:
+To streamline the process of cleaning up your environment, Docker provides 
+a prune command that will automatically remove old containers and 
+base images:
+ 
+$ docker system prune -fa
+
+Executing this command will remove any container images that are not tied 
+to an existing running container, along with any other resources in your 
+Docker environment.
+
+
+
+
+
+
