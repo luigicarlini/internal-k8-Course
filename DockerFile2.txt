@@ -1,0 +1,70 @@
+1. First, make sure you are in the custom-docker-image directory created in 
+Exercise 2.01: Creating Our First Dockerfile. Confirm that the directory contains 
+the following Dockerfile created in Exercise 2.01: Creating Our First Dockerfile:
+
+# This is my first Docker image
+FROM ubuntu 
+LABEL maintainer=sathsara@mydomain.com 
+RUN apt-get update
+CMD ["The Docker Workshop"]
+ENTRYPOINT ["echo", "You are reading"]
+
+
+-----------------------------------------------------------------------------------------------------
+
+2. Build the Docker image with the docker image build command. This 
+command has the optional -t flag to specify the tag of the image. Tag your 
+image as welcome:1.0:
+$ docker image build -t welcome:1.0 .
+
+Do not forget the dot (.) at the end of the preceding command, which is 
+used to denote the current directory as the build context.
+
+-----------------------------------------------------------------------------------------------------
+
+3. Build this image again without changing the Dockerfile content:
+$ docker image build -t welcome:2.0 .
+
+Note that this build process completed much quicker than the previous process 
+due to the cache being used:
+
+-----------------------------------------------------------------------------------------------------
+
+4. Use the docker image list command to list all the Docker images available 
+on your computer:
+
+$ docker image list
+
+These images are available on your computer, either when you pull them from a 
+Docker registry, or when you build on your computer:
+
+REPOSITORY TAG    IMAGE ID     CREATED        SIZE
+welcome    1.0    98f571a42e5c 23 minutes ago 91.9MB
+welcome    2.0    98f571a42e5c 23 minutes ago 91.9MB
+ubuntu     latest 549b9b86cb8d 2 weeks ago    64.2MB
+
+As you can see from the preceding output, there are three Docker images 
+available. The ubuntu image is pulled from the Docker Hub, and version (tag) 
+1.0 and 2.0 of the welcome images are built on your computer.
+
+-----------------------------------------------------------------------------------------------------
+5. Execute the docker container run command to start a new container 
+from the Docker image that you built in step 1 (welcome:1.0):
+$ docker container run welcome:1.0
+
+The output should be as follows:
+You are reading The Docker Workshop
+You receive the expected output of You are reading The Docker 
+Workshop. You are reading is due to the parameter provided with 
+the ENTRYPOINT directive, and The Docker Workshop comes from the 
+parameter provided with the CMD directive.
+
+-----------------------------------------------------------------------------------------------------
+6. Finally, execute the docker container run command again, this time with 
+command-line arguments:
+$ docker container run welcome:1.0 "Docker Beginner's Guide"
+You will get the output You are reading Docker Beginner's Guide
+because of the command-line argument, Docker Beginner's Guide, and 
+the You are reading argument provided in the ENTRYPOINT directive:
+You are reading Docker Beginner's Guide
+
